@@ -2,10 +2,12 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
 using RacingFeedApi.Exceptions;
-using RacingFeedApi.Models;
+using RacingFeedApi.ViewModels;
 using RacingFeedApi.Providers;
 using RacingFeedApi.Repositories;
 using RacingFeedApi.Services;
+using RacingFeedApi.Events;
+using NSubstitute.ExceptionExtensions;
 
 namespace RacingFeedApi.UnitTests;
 
@@ -97,28 +99,41 @@ public class RaceServiceTests
         {
             await mockRaceRepository.Received(1).InsertRace(Arg.Is<Repositories.Entities.Race>(r => 
             r.RaceId == 1123 && 
-            r.RaceLocation == "Caulfield" &&
-            r.Distance == 2400 &&
-            r.RaceNumber == 5 &&
-            r.RaceType == "Metropolitan" &&
-            r.RaceInfo == "Carlton Draught Caulfield Cup" &&
-            r.TrackCondition == "Good(4)" &&
-            r.StartTimeUtc.ToString() == "20/10/2023 8:15:00 pm" &&
-            r.Runners.Count() == 2 &&
-            r.Runners[0].Id == 101 &&
-            r.Runners[0].Number == 1 &&
-            r.Runners[0].Barrier == 8 &&
-            r.Runners[0].Name == "BORN A KING" &&
-            r.Runners[0].WinPrice == 3.4m &&
-            r.Runners[0].Jockey == "Ben Melham" &&
-            r.Runners[0].Trainer == "C Maher and D Eustace" &&
-            r.Runners[1].Id == 167 &&
-            r.Runners[1].Number == 3 &&
-            r.Runners[1].Barrier == 5 &&
-            r.Runners[1].Name == "ARAPAHO" &&
-            r.Runners[1].WinPrice == 5.7m &&
-            r.Runners[1].Jockey == "Damian Lane" &&
-            r.Runners[1].Trainer == "T Yoshioka"));
+            r.RaceDetails == "{\"RaceId\":1123,\"RaceLocation\":\"Caulfield\",\"Distance\":2400,\"RaceNumber\":5,\"RaceType\":\"Metropolitan\",\"RaceInfo\":\"Carlton Draught Caulfield Cup\",\"TrackCondition\":\"Good(4)\",\"StartTimeUtc\":\"2023-10-20T20:15:00Z\",\"Runners\":[{\"Id\":101,\"Number\":1,\"Barrier\":8,\"Name\":\"BORN A KING\",\"WinPrice\":3.4,\"Jockey\":\"Ben Melham\",\"Trainer\":\"C Maher and D Eustace\"},{\"Id\":167,\"Number\":3,\"Barrier\":5,\"Name\":\"ARAPAHO\",\"WinPrice\":5.7,\"Jockey\":\"Damian Lane\",\"Trainer\":\"T Yoshioka\"}]}"));
+
+            await mockMessagingProvider.Received(1).PublishEvent(Arg.Is<RaceCreated>(r =>
+            r.Message == "{\"RaceId\":1123,\"RaceLocation\":\"Caulfield\",\"Distance\":2400,\"RaceNumber\":5,\"RaceType\":\"Metropolitan\",\"RaceInfo\":\"Carlton Draught Caulfield Cup\",\"TrackCondition\":\"Good(4)\",\"StartTimeUtc\":\"2023-10-20T20:15:00Z\",\"Runners\":[{\"Id\":101,\"Number\":1,\"Barrier\":8,\"Name\":\"BORN A KING\",\"WinPrice\":3.4,\"Jockey\":\"Ben Melham\",\"Trainer\":\"C Maher and D Eustace\"},{\"Id\":167,\"Number\":3,\"Barrier\":5,\"Name\":\"ARAPAHO\",\"WinPrice\":5.7,\"Jockey\":\"Damian Lane\",\"Trainer\":\"T Yoshioka\"}]}"));
         });
+    }
+
+    [Fact]
+    public async Task GivenCaughtExceptionCreateRaceThrowsError()
+    {
+        // arrange
+        mockRaceRepository.GetRace(Arg.Any<long>()).ReturnsNull();
+
+        var raceCreate = new RaceCreate
+        {
+            MeetingId = 219120,
+            RaceId = 1123,
+            RaceLocation = "Caulfield",
+            RaceDistance = 2400,
+            RaceNo = 5,
+            RaceType = "Metropolitan",
+            RaceInfo = "Carlton Draught Caulfield Cup",
+            TrackCondition = "Good(4)",
+            Source = "RacingServicesProvider",
+            PriceType = "Win",
+            PoolSize = 227,
+            StartTime = 1697832900,
+            CreationTime = 1697656815
+        };
+
+        // act
+        async Task act() => await raceService.CreateRace(raceCreate);
+
+        // assert
+        var createResourceException = await Assert.ThrowsAsync<CreateResourceException>(act);
+        Assert.Equal("An exception occurred while creating this race", createResourceException.Message);
     }
 }

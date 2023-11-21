@@ -1,6 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using RacingFeedApi.Models;
+using RacingFeedApi.ViewModels;
 using RacingFeedApi.Services;
 
 [ApiController]

@@ -1,8 +1,9 @@
-using RacingFeedApi.Events;
+using System.Text.Json;
 using RacingFeedApi.Exceptions;
-using RacingFeedApi.Models;
+using RacingFeedApi.ViewModels;
 using RacingFeedApi.Providers;
 using RacingFeedApi.Repositories;
+using RacingFeedApi.Events;
 
 namespace RacingFeedApi.Services;
 
@@ -33,7 +34,10 @@ public class RaceService : IRaceService
             throw new CreateResourceException("RaceId already exists");
         }
 
-        var raceCreated = new Repositories.Entities.Race
+        try
+        {
+
+        var raceCreated = new DomainModels.Race
         {
             RaceId = race.RaceId,
             RaceLocation = race.RaceLocation,
@@ -43,7 +47,7 @@ public class RaceService : IRaceService
             RaceInfo = race.RaceInfo,
             TrackCondition = race.TrackCondition,
             StartTimeUtc = DateTimeOffset.FromUnixTimeSeconds(race.StartTime).UtcDateTime,
-            Runners = race.Runners.Select(r => new Repositories.Entities.Runner
+            Runners = race.Runners.Select(r => new DomainModels.Runner
             {
                 Id = r.Id,
                 Number = r.TabNo,
@@ -53,11 +57,34 @@ public class RaceService : IRaceService
                 Jockey = r.Jockey,
                 Trainer = r.Trainer
             }).ToList(),
-            UpdatedUtc = DateTime.UtcNow
         };
-        
-        await _raceRepository.InsertRace(raceCreated);
 
-        //await _messagingProvider.PublishEvent(new RaceCreated { RaceId = race.RaceId });
+        _logger.LogInformation("Race {raceId} successfully mapped to domain", race.RaceId);
+        
+        await _raceRepository.InsertRace(new Repositories.Entities.Race 
+        {
+            RaceId = raceCreated.RaceId,
+            RaceDetails = JsonSerializer.Serialize(raceCreated),
+            UpdatedUtc = DateTime.UtcNow
+        });
+
+        _logger.LogInformation("Race {raceId} inserted into DB", race.RaceId);
+
+        await _messagingProvider.PublishEvent(new RaceCreated
+        {
+            MessageId = Guid.NewGuid(),
+            CorrolationId = Guid.NewGuid(),
+            Message = JsonSerializer.Serialize(raceCreated),
+            PublishedUtc = DateTime.UtcNow
+        });
+
+        _logger.LogInformation("Race {raceId} RaceCreated event published", race.RaceId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating raceId {raceId}", race.RaceId);
+
+            throw new CreateResourceException("An exception occurred while creating this race");
+        }
     }
 }

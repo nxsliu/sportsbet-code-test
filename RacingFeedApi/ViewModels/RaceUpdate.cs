@@ -1,6 +1,6 @@
-namespace RacingFeedApi.Models;
+namespace RacingFeedApi.ViewModels;
 
-public class RaceCreate
+public class RaceUpdate
 {
     public long MeetingId { get; set; }
     public long RaceId { get; set; }
@@ -12,7 +12,7 @@ public class RaceCreate
     public string TrackCondition { get; set; }
     public string Source { get; set; }
     public string PriceType { get; set; }
-    public int PoolSize { get; set; }
+    public string PoolSize { get; set; }
     public long StartTime { get; set; }
     public long CreationTime { get; set; }
     public IList<Runner> Runners { get; set; }
