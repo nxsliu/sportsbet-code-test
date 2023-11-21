@@ -1,0 +1,6 @@
+@RacingFeedApi_HostAddress = http://localhost:5057
+
+GET {{RacingFeedApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
