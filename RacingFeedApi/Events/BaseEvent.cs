@@ -6,6 +6,5 @@ public class BaseEvent : INotification
 {
     public Guid MessageId { get; set; }
     public Guid CorrolationId { get; set; }
-    public string Message { get; set; }
     public DateTime PublishedUtc {get;set;}
 }

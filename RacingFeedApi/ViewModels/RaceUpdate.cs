@@ -12,7 +12,7 @@ public class RaceUpdate
     public string TrackCondition { get; set; }
     public string Source { get; set; }
     public string PriceType { get; set; }
-    public string PoolSize { get; set; }
+    public int PoolSize { get; set; }
     public long StartTime { get; set; }
     public long CreationTime { get; set; }
     public IList<Runner> Runners { get; set; }
