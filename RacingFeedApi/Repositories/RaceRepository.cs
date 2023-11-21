@@ -4,14 +4,14 @@ namespace RacingFeedApi.Repositories;
 
 public interface IRaceRepository
 {
-    Task SaveRace(Race race);
+    Task InsertRace(Race race);
     Task<Race> GetRace(long raceId);
     
 }
 
 public class RaceRepository : IRaceRepository
 {
-    public async Task SaveRace(Race race)
+    public async Task InsertRace(Race race)
     {
         FakeDataStore.Races.Add(race.RaceId, race);
     }
