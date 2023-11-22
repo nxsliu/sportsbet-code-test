@@ -10,8 +10,9 @@ namespace RacingFeedApi.Services;
 
 public interface IRaceService
 {
-    Task CreateRace(RaceCreate race);
+    Task CreateRace(RaceUpdate race);
     Task UpdateRace(RaceUpdate race);
+    Task<bool> CheckRaceExits(long raceId);
 }
 
 public class RaceService : IRaceService
@@ -27,7 +28,7 @@ public class RaceService : IRaceService
         _logger = logger;
     }
 
-    public async Task CreateRace(RaceCreate race)
+    public async Task CreateRace(RaceUpdate race)
     {
         _logger.LogInformation("Creating Race {raceId}", race.RaceId);
 
@@ -38,28 +39,8 @@ public class RaceService : IRaceService
 
         try
         {
-            Race raceCreated = new Race
-            {
-                RaceId = race.RaceId,
-                RaceLocation = race.RaceLocation,
-                Distance = race.RaceDistance,
-                RaceNumber = race.RaceNo,
-                RaceType = race.RaceType,
-                RaceInfo = race.RaceInfo,
-                TrackCondition = race.TrackCondition,
-                StartTimeUtc = DateTimeOffset.FromUnixTimeSeconds(race.StartTime).UtcDateTime,
-                Runners = race.Runners.Select(r => new DomainModels.Runner
-                {
-                    Id = r.Id,
-                    Number = r.TabNo,
-                    Barrier = r.Barrier,
-                    Name = r.Name,
-                    WinPrice = r.Price,
-                    Jockey = r.Jockey,
-                    Trainer = r.Trainer
-                }).ToList(),
-            };
-
+            Race raceCreated = MapToDomainModel(race);
+            
             _logger.LogInformation("Race {raceId} successfully mapped to domain", race.RaceId);
 
             await _raceRepository.InsertRace(new Repositories.Entities.Race
@@ -79,13 +60,13 @@ public class RaceService : IRaceService
                 PublishedUtc = DateTime.UtcNow
             });
 
-            _logger.LogInformation("Race {raceId} RaceCreated event published", race.RaceId);
+            _logger.LogInformation("RaceCreated event published for race {raceId}", race.RaceId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating raceId {raceId}", race.RaceId);
 
-            throw new CreateResourceException("An exception occurred while creating this race");
+            throw new CreateResourceException($"An exception occurred while creating race {race.RaceId}");
         }
     }
 
@@ -101,27 +82,7 @@ public class RaceService : IRaceService
 
         try
         {
-            Race raceUpdated = new Race
-            {
-                RaceId = race.RaceId,
-                RaceLocation = race.RaceLocation,
-                Distance = race.RaceDistance,
-                RaceNumber = race.RaceNo,
-                RaceType = race.RaceType,
-                RaceInfo = race.RaceInfo,
-                TrackCondition = race.TrackCondition,
-                StartTimeUtc = DateTimeOffset.FromUnixTimeSeconds(race.StartTime).UtcDateTime,
-                Runners = race.Runners.Select(r => new DomainModels.Runner
-                {
-                    Id = r.Id,
-                    Number = r.TabNo,
-                    Barrier = r.Barrier,
-                    Name = r.Name,
-                    WinPrice = r.Price,
-                    Jockey = r.Jockey,
-                    Trainer = r.Trainer
-                }).ToList(),
-            };
+            Race raceUpdated = MapToDomainModel(race);
 
             _logger.LogInformation("Race {raceId} successfully mapped to domain", race.RaceId);
 
@@ -148,13 +109,43 @@ public class RaceService : IRaceService
                 PublishedUtc = DateTime.UtcNow
             });
 
-            _logger.LogInformation("Race {raceId} RaceUpdated event published", race.RaceId);
+            _logger.LogInformation("RaceUpdated event published for race {raceId} ", race.RaceId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating raceId {raceId}", race.RaceId);
 
-            throw new UpdateResourceException("An exception occurred while updating this race");
+            throw new UpdateResourceException($"An exception occurred while updating race {race.RaceId}");
         }
+    }
+
+    public async Task<bool> CheckRaceExits(long raceId)
+    {
+        return (await _raceRepository.GetRace(raceId)) != null;
+    }
+
+    private Race MapToDomainModel(RaceUpdate race)
+    {
+        return new Race
+        {
+            RaceId = race.RaceId,
+            RaceLocation = race.RaceLocation,
+            Distance = race.RaceDistance,
+            RaceNumber = race.RaceNo,
+            RaceType = race.RaceType,
+            RaceInfo = race.RaceInfo,
+            TrackCondition = race.TrackCondition,
+            StartTimeUtc = DateTimeOffset.FromUnixTimeSeconds(race.StartTime).UtcDateTime,
+            Runners = race.Runners.Select(r => new DomainModels.Runner
+            {
+                Id = r.Id,
+                Number = r.TabNo,
+                Barrier = r.Barrier,
+                Name = r.Name,
+                WinPrice = r.Price,
+                Jockey = r.Jockey,
+                Trainer = r.Trainer
+            }).ToList(),
+        };
     }
 }

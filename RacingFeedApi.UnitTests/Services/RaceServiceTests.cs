@@ -8,14 +8,14 @@ using RacingFeedApi.Repositories;
 using RacingFeedApi.Services;
 using RacingFeedApi.Events;
 
-namespace RacingFeedApi.UnitTests;
+namespace RacingFeedApi.UnitTests.Services;
 
 public class RaceServiceTests
 {
-    IMessagingProvider mockMessagingProvider = Substitute.For<IMessagingProvider>();
-    IRaceRepository mockRaceRepository = Substitute.For<IRaceRepository>();
-    ILogger<RaceService> mockLogger = Substitute.For<ILogger<RaceService>>();
-    RaceService raceService;
+    private readonly IMessagingProvider mockMessagingProvider = Substitute.For<IMessagingProvider>();
+    private readonly IRaceRepository mockRaceRepository = Substitute.For<IRaceRepository>();
+    private readonly ILogger<RaceService> mockLogger = Substitute.For<ILogger<RaceService>>();
+    private readonly RaceService raceService;
 
     public RaceServiceTests()
     {
@@ -31,7 +31,7 @@ public class RaceServiceTests
         // arrange
         mockRaceRepository.GetRace(Arg.Any<long>()).Returns(Task.FromResult(new Repositories.Entities.Race { RaceId = 1 }));
 
-        var raceCreate = new RaceCreate
+        var raceCreate = new RaceUpdate
         {
             RaceId = 1
         };
@@ -50,7 +50,7 @@ public class RaceServiceTests
         // arrage
         mockRaceRepository.GetRace(Arg.Any<long>()).ReturnsNull();
 
-        var raceCreate = new RaceCreate
+        var raceCreate = new RaceUpdate
         {
             MeetingId = 219120,
             RaceId = 1123,
@@ -111,7 +111,7 @@ public class RaceServiceTests
         // arrange
         mockRaceRepository.GetRace(Arg.Any<long>()).ReturnsNull();
 
-        var raceCreate = new RaceCreate
+        var raceCreate = new RaceUpdate
         {
             MeetingId = 219120,
             RaceId = 1123,
@@ -133,7 +133,7 @@ public class RaceServiceTests
 
         // assert
         var createResourceException = await Assert.ThrowsAsync<CreateResourceException>(act);
-        Assert.Equal("An exception occurred while creating this race", createResourceException.Message);
+        Assert.Equal("An exception occurred while creating race 1123", createResourceException.Message);
     }
 
     [Fact]
@@ -252,7 +252,7 @@ public class RaceServiceTests
 
         // assert
         var createResourceException = await Assert.ThrowsAsync<UpdateResourceException>(act);
-        Assert.Equal("An exception occurred while updating this race", createResourceException.Message);
+        Assert.Equal("An exception occurred while updating race 1123", createResourceException.Message);
     }
 
     [Fact]
@@ -309,6 +309,22 @@ public class RaceServiceTests
 
         // assert
         var createResourceException = await Assert.ThrowsAsync<UpdateResourceException>(act);
-        Assert.Equal("An exception occurred while updating this race", createResourceException.Message);
+        Assert.Equal("An exception occurred while updating race 1123", createResourceException.Message);
+    }
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(2, false)]
+    public async Task Given_RaceId_CheckRaceExists_IsSuccessful(long raceId, bool exists)
+    {
+        // arrange
+        mockRaceRepository.GetRace(1).Returns(Task.FromResult(new Repositories.Entities.Race { RaceId = 1, UpdatedUtc = DateTime.UtcNow }));
+        mockRaceRepository.GetRace(2).ReturnsNull();
+
+        // act
+        var result = await raceService.CheckRaceExits(raceId);
+
+        // assert
+        Assert.Equal(exists, result);
     }
 }

@@ -1,4 +1,3 @@
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using RacingFeedApi.ViewModels;
 using RacingFeedApi.Services;
@@ -16,9 +15,18 @@ public class RaceController : ControllerBase
 
     [HttpPost]
     [Consumes("application/xml")]
-    public async Task<ActionResult<string>> CreateRace(RaceCreate raceCreate)
+    public async Task<ActionResult<string>> UpdateRace(RaceUpdate race)
     {
-        await _raceService.CreateRace(raceCreate);
+        //throw new NotImplementedException();
+
+        if (await _raceService.CheckRaceExits(race.RaceId))
+        {
+            await _raceService.UpdateRace(race);
+        }
+        else
+        {
+            await _raceService.CreateRace(race);
+        }
 
         return Ok();
     }
