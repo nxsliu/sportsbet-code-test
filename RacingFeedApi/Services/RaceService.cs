@@ -39,13 +39,15 @@ public class RaceService : IRaceService
 
         try
         {
-            Race raceCreated = MapToDomainModel(race);
+            var newInternalRaceId = (await _raceRepository.GetMaxInternalRaceId()) + 1;
+            Race raceCreated = MapToDomainModel(newInternalRaceId, race);
             
             _logger.LogInformation("Race {raceId} successfully mapped to domain", race.RaceId);
 
             await _raceRepository.InsertRace(new Repositories.Entities.Race
             {
-                RaceId = raceCreated.RaceId,
+                ExternalRaceId = race.RaceId,
+                InternalRaceId = newInternalRaceId,
                 RaceDetails = JsonSerializer.Serialize(raceCreated),
                 UpdatedUtc = DateTime.UtcNow
             });
@@ -82,7 +84,7 @@ public class RaceService : IRaceService
 
         try
         {
-            Race raceUpdated = MapToDomainModel(race);
+            Race raceUpdated = MapToDomainModel(raceToUpdate.InternalRaceId, race);
 
             _logger.LogInformation("Race {raceId} successfully mapped to domain", race.RaceId);
 
@@ -94,7 +96,8 @@ public class RaceService : IRaceService
 
             await _raceRepository.UpdateRace(new Repositories.Entities.Race
             {
-                RaceId = raceUpdated.RaceId,
+                ExternalRaceId = race.RaceId,
+                InternalRaceId = raceToUpdate.InternalRaceId,
                 RaceDetails = JsonSerializer.Serialize(raceUpdated),
                 UpdatedUtc = DateTime.UtcNow
             });
@@ -124,11 +127,11 @@ public class RaceService : IRaceService
         return (await _raceRepository.GetRace(raceId)) != null;
     }
 
-    private Race MapToDomainModel(RaceUpdate race)
+    private Race MapToDomainModel(long internalRaceId, RaceUpdate race)
     {
         return new Race
         {
-            RaceId = race.RaceId,
+            RaceId = internalRaceId,
             RaceLocation = race.RaceLocation,
             Distance = race.RaceDistance,
             RaceNumber = race.RaceNo,

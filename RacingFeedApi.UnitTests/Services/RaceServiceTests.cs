@@ -29,7 +29,7 @@ public class RaceServiceTests
     public async Task Given_DuplicateRaceId_CreateRace_ThrowsError()
     {
         // arrange
-        mockRaceRepository.GetRace(Arg.Any<long>()).Returns(Task.FromResult(new Repositories.Entities.Race { RaceId = 1 }));
+        mockRaceRepository.GetRace(Arg.Any<long>()).Returns(Task.FromResult(new Repositories.Entities.Race { ExternalRaceId = 1 }));
 
         var raceCreate = new RaceUpdate
         {
@@ -49,6 +49,7 @@ public class RaceServiceTests
     {
         // arrage
         mockRaceRepository.GetRace(Arg.Any<long>()).ReturnsNull();
+        mockRaceRepository.GetMaxInternalRaceId().Returns(Task.FromResult<long>(1));
 
         var raceCreate = new RaceUpdate
         {
@@ -97,11 +98,12 @@ public class RaceServiceTests
         Received.InOrder(async () =>
         {
             await mockRaceRepository.Received(1).InsertRace(Arg.Is<Repositories.Entities.Race>(r =>
-            r.RaceId == 1123 &&
-            r.RaceDetails == "{\"RaceId\":1123,\"RaceLocation\":\"Caulfield\",\"Distance\":2400,\"RaceNumber\":5,\"RaceType\":\"Metropolitan\",\"RaceInfo\":\"Carlton Draught Caulfield Cup\",\"TrackCondition\":\"Good(4)\",\"StartTimeUtc\":\"2023-10-20T20:15:00Z\",\"Runners\":[{\"Id\":101,\"Number\":1,\"Barrier\":8,\"Name\":\"BORN A KING\",\"WinPrice\":3.4,\"Jockey\":\"Ben Melham\",\"Trainer\":\"C Maher and D Eustace\"},{\"Id\":167,\"Number\":3,\"Barrier\":5,\"Name\":\"ARAPAHO\",\"WinPrice\":5.7,\"Jockey\":\"Damian Lane\",\"Trainer\":\"T Yoshioka\"}]}"));
+            r.ExternalRaceId == 1123 &&
+            r.InternalRaceId == 2 &&
+            r.RaceDetails == "{\"RaceId\":2,\"RaceLocation\":\"Caulfield\",\"Distance\":2400,\"RaceNumber\":5,\"RaceType\":\"Metropolitan\",\"RaceInfo\":\"Carlton Draught Caulfield Cup\",\"TrackCondition\":\"Good(4)\",\"StartTimeUtc\":\"2023-10-20T20:15:00Z\",\"Runners\":[{\"Id\":101,\"Number\":1,\"Barrier\":8,\"Name\":\"BORN A KING\",\"WinPrice\":3.4,\"Jockey\":\"Ben Melham\",\"Trainer\":\"C Maher and D Eustace\"},{\"Id\":167,\"Number\":3,\"Barrier\":5,\"Name\":\"ARAPAHO\",\"WinPrice\":5.7,\"Jockey\":\"Damian Lane\",\"Trainer\":\"T Yoshioka\"}]}"));
 
             await mockMessagingProvider.Received(1).PublishEvent(Arg.Is<RaceCreated>(r =>
-            r.Message == "{\"RaceId\":1123,\"RaceLocation\":\"Caulfield\",\"Distance\":2400,\"RaceNumber\":5,\"RaceType\":\"Metropolitan\",\"RaceInfo\":\"Carlton Draught Caulfield Cup\",\"TrackCondition\":\"Good(4)\",\"StartTimeUtc\":\"2023-10-20T20:15:00Z\",\"Runners\":[{\"Id\":101,\"Number\":1,\"Barrier\":8,\"Name\":\"BORN A KING\",\"WinPrice\":3.4,\"Jockey\":\"Ben Melham\",\"Trainer\":\"C Maher and D Eustace\"},{\"Id\":167,\"Number\":3,\"Barrier\":5,\"Name\":\"ARAPAHO\",\"WinPrice\":5.7,\"Jockey\":\"Damian Lane\",\"Trainer\":\"T Yoshioka\"}]}"));
+            r.Message == "{\"RaceId\":2,\"RaceLocation\":\"Caulfield\",\"Distance\":2400,\"RaceNumber\":5,\"RaceType\":\"Metropolitan\",\"RaceInfo\":\"Carlton Draught Caulfield Cup\",\"TrackCondition\":\"Good(4)\",\"StartTimeUtc\":\"2023-10-20T20:15:00Z\",\"Runners\":[{\"Id\":101,\"Number\":1,\"Barrier\":8,\"Name\":\"BORN A KING\",\"WinPrice\":3.4,\"Jockey\":\"Ben Melham\",\"Trainer\":\"C Maher and D Eustace\"},{\"Id\":167,\"Number\":3,\"Barrier\":5,\"Name\":\"ARAPAHO\",\"WinPrice\":5.7,\"Jockey\":\"Damian Lane\",\"Trainer\":\"T Yoshioka\"}]}"));
         });
     }
 
@@ -161,8 +163,8 @@ public class RaceServiceTests
         // arrage
         var updateUtc = DateTime.UtcNow;
         mockRaceRepository.GetRace(Arg.Any<long>()).Returns(
-            Task.FromResult(new Repositories.Entities.Race { RaceId = 1123, UpdatedUtc = updateUtc }),
-            Task.FromResult(new Repositories.Entities.Race { RaceId = 1123, UpdatedUtc = updateUtc })
+            Task.FromResult(new Repositories.Entities.Race { ExternalRaceId = 1123, InternalRaceId = 5, UpdatedUtc = updateUtc }),
+            Task.FromResult(new Repositories.Entities.Race { ExternalRaceId = 1123, InternalRaceId = 5, UpdatedUtc = updateUtc })
             );
 
         var raceUpdate = new RaceUpdate
@@ -212,11 +214,12 @@ public class RaceServiceTests
         Received.InOrder(async () =>
         {
             await mockRaceRepository.Received(1).UpdateRace(Arg.Is<Repositories.Entities.Race>(r =>
-            r.RaceId == 1123 &&
-            r.RaceDetails == "{\"RaceId\":1123,\"RaceLocation\":\"Caulfield\",\"Distance\":2400,\"RaceNumber\":5,\"RaceType\":\"Metropolitan\",\"RaceInfo\":\"Carlton Draught Caulfield Cup\",\"TrackCondition\":\"Good(4)\",\"StartTimeUtc\":\"2023-10-20T20:15:00Z\",\"Runners\":[{\"Id\":101,\"Number\":1,\"Barrier\":8,\"Name\":\"BORN A KING\",\"WinPrice\":3.4,\"Jockey\":\"Ben Melham\",\"Trainer\":\"C Maher and D Eustace\"},{\"Id\":167,\"Number\":3,\"Barrier\":5,\"Name\":\"ARAPAHO\",\"WinPrice\":5.7,\"Jockey\":\"Damian Lane\",\"Trainer\":\"T Yoshioka\"}]}"));
+            r.ExternalRaceId == 1123 &&
+            r.InternalRaceId == 5 &&
+            r.RaceDetails == "{\"RaceId\":5,\"RaceLocation\":\"Caulfield\",\"Distance\":2400,\"RaceNumber\":5,\"RaceType\":\"Metropolitan\",\"RaceInfo\":\"Carlton Draught Caulfield Cup\",\"TrackCondition\":\"Good(4)\",\"StartTimeUtc\":\"2023-10-20T20:15:00Z\",\"Runners\":[{\"Id\":101,\"Number\":1,\"Barrier\":8,\"Name\":\"BORN A KING\",\"WinPrice\":3.4,\"Jockey\":\"Ben Melham\",\"Trainer\":\"C Maher and D Eustace\"},{\"Id\":167,\"Number\":3,\"Barrier\":5,\"Name\":\"ARAPAHO\",\"WinPrice\":5.7,\"Jockey\":\"Damian Lane\",\"Trainer\":\"T Yoshioka\"}]}"));
 
             await mockMessagingProvider.Received(1).PublishEvent(Arg.Is<RaceUpdated>(r =>
-            r.Message == "{\"RaceId\":1123,\"RaceLocation\":\"Caulfield\",\"Distance\":2400,\"RaceNumber\":5,\"RaceType\":\"Metropolitan\",\"RaceInfo\":\"Carlton Draught Caulfield Cup\",\"TrackCondition\":\"Good(4)\",\"StartTimeUtc\":\"2023-10-20T20:15:00Z\",\"Runners\":[{\"Id\":101,\"Number\":1,\"Barrier\":8,\"Name\":\"BORN A KING\",\"WinPrice\":3.4,\"Jockey\":\"Ben Melham\",\"Trainer\":\"C Maher and D Eustace\"},{\"Id\":167,\"Number\":3,\"Barrier\":5,\"Name\":\"ARAPAHO\",\"WinPrice\":5.7,\"Jockey\":\"Damian Lane\",\"Trainer\":\"T Yoshioka\"}]}"));
+            r.Message == "{\"RaceId\":5,\"RaceLocation\":\"Caulfield\",\"Distance\":2400,\"RaceNumber\":5,\"RaceType\":\"Metropolitan\",\"RaceInfo\":\"Carlton Draught Caulfield Cup\",\"TrackCondition\":\"Good(4)\",\"StartTimeUtc\":\"2023-10-20T20:15:00Z\",\"Runners\":[{\"Id\":101,\"Number\":1,\"Barrier\":8,\"Name\":\"BORN A KING\",\"WinPrice\":3.4,\"Jockey\":\"Ben Melham\",\"Trainer\":\"C Maher and D Eustace\"},{\"Id\":167,\"Number\":3,\"Barrier\":5,\"Name\":\"ARAPAHO\",\"WinPrice\":5.7,\"Jockey\":\"Damian Lane\",\"Trainer\":\"T Yoshioka\"}]}"));
         });
     }
 
@@ -226,8 +229,8 @@ public class RaceServiceTests
         // arrange
         var updateUtc = DateTime.UtcNow;
         mockRaceRepository.GetRace(Arg.Any<long>()).Returns(
-            Task.FromResult(new Repositories.Entities.Race { RaceId = 1123, UpdatedUtc = updateUtc }),
-            Task.FromResult(new Repositories.Entities.Race { RaceId = 1123, UpdatedUtc = updateUtc })
+            Task.FromResult(new Repositories.Entities.Race { ExternalRaceId = 1123, UpdatedUtc = updateUtc }),
+            Task.FromResult(new Repositories.Entities.Race { ExternalRaceId = 1123, UpdatedUtc = updateUtc })
             );
 
         var raceUpdate = new RaceUpdate
@@ -260,8 +263,8 @@ public class RaceServiceTests
     {
         // arrange
         mockRaceRepository.GetRace(Arg.Any<long>()).Returns(
-            Task.FromResult(new Repositories.Entities.Race { RaceId = 1123, UpdatedUtc = DateTime.UtcNow }),
-            Task.FromResult(new Repositories.Entities.Race { RaceId = 1123, UpdatedUtc = DateTime.UtcNow.AddMicroseconds(1) })
+            Task.FromResult(new Repositories.Entities.Race { ExternalRaceId = 1123, UpdatedUtc = DateTime.UtcNow }),
+            Task.FromResult(new Repositories.Entities.Race { ExternalRaceId = 1123, UpdatedUtc = DateTime.UtcNow.AddMicroseconds(1) })
             );
 
         var raceUpdate = new RaceUpdate
@@ -318,7 +321,7 @@ public class RaceServiceTests
     public async Task Given_RaceId_CheckRaceExists_IsSuccessful(long raceId, bool exists)
     {
         // arrange
-        mockRaceRepository.GetRace(1).Returns(Task.FromResult(new Repositories.Entities.Race { RaceId = 1, UpdatedUtc = DateTime.UtcNow }));
+        mockRaceRepository.GetRace(1).Returns(Task.FromResult(new Repositories.Entities.Race { ExternalRaceId = 1, UpdatedUtc = DateTime.UtcNow }));
         mockRaceRepository.GetRace(2).ReturnsNull();
 
         // act
