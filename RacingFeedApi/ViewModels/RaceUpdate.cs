@@ -1,5 +1,8 @@
+using System.Xml.Serialization;
+
 namespace RacingFeedApi.ViewModels;
 
+[XmlRoot("RaceUpdate")]
 public class RaceUpdate
 {
     public long MeetingId { get; set; }
@@ -15,5 +18,8 @@ public class RaceUpdate
     public int PoolSize { get; set; }
     public long StartTime { get; set; }
     public long CreationTime { get; set; }
-    public IList<Runner> Runners { get; set; }
+
+    [XmlArray("Runners")]
+    [XmlArrayItem("Runner")]
+    public List<Runner> Runners { get; set; }
 }

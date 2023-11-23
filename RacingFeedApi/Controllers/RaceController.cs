@@ -17,8 +17,6 @@ public class RaceController : ControllerBase
     [Consumes("application/xml")]
     public async Task<ActionResult<string>> UpdateRace(RaceUpdate race)
     {
-        //throw new NotImplementedException();
-
         if (await _raceService.CheckRaceExits(race.RaceId))
         {
             await _raceService.UpdateRace(race);

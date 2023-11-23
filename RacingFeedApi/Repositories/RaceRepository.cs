@@ -20,7 +20,9 @@ public class RaceRepository : IRaceRepository
 
     public async Task<Race> GetRace(long raceId)
     {
-        return FakeDataStore.Races[raceId];
+        FakeDataStore.Races.TryGetValue(raceId, out Race race);
+
+        return race;
     }
 
     public async Task UpdateRace(Race race)

@@ -1,2 +1,0 @@
-Not sure how granular to make the events... granular events mixed with complex domains may not scale well.
-There are no requirements about how the json data will be used, no requirements for persisting the data either.
