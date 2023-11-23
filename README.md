@@ -1,7 +1,5 @@
 # sportsbet-code-test
 
-datetimeUtc not transformed correctly???
-add exception handler middleware
 add messageId and corrolationId in request header
 add these headers to logging context
 

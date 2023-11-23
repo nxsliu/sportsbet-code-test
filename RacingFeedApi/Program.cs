@@ -1,3 +1,4 @@
+using RacingFeedApi.Middlewares;
 using RacingFeedApi.Providers;
 using RacingFeedApi.Repositories;
 using RacingFeedApi.Services;
@@ -17,6 +18,8 @@ builder.Services.AddMediatR(cfg => {
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
