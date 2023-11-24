@@ -84,4 +84,19 @@ public class RaceTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Single(MessagesHandledHelper.RaceUpdatedMessagedHandled);
         Assert.Equal(jsonString, MessagesHandledHelper.RaceUpdatedMessagedHandled.First().Message);
     }
+
+    [Fact]
+    public async Task Given_InvalidUpdateRequest_UpdateRace_ReturnsFailure()
+    {
+        // arrange
+        var client = _factory.CreateClient();
+
+        // act
+        var xmlString = "<RaceUpdate xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><MeetingID>219120</MeetingID><RaceId>1111</RaceId><RaceDistance>5000</RaceDistance><RaceNo>10</RaceNo><RaceType>Country</RaceType><RaceInfo>Mushroom Cup</RaceInfo><TrackCondition>Bad(8)</TrackCondition><Source>RacingServicesProvider</Source><PriceType>Win</PriceType><PoolSize>227</PoolSize><StartTime>1697832900</StartTime><CreationTime>1697656815</CreationTime><Runners><Runner Id=\"222\" TabNo=\"5\" Barrier=\"12\" Name=\"FRANCE\" Price=\"5.5\" Jockey=\"Mark Andersen\" Trainer=\"L J Hoooker\"/></Runners></RaceUpdate>";
+        var stringContent = new StringContent(xmlString, Encoding.UTF8, "application/xml");
+        var response = await client.PostAsync("api/race", stringContent);
+
+        // assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }
